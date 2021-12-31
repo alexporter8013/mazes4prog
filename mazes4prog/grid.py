@@ -2,7 +2,7 @@ from typing import List
 from functools import cached_property
 from random import randint
 
-import PIL
+from PIL import Image, ImageColor, ImageDraw
 
 from .cell import Cell
 
@@ -85,3 +85,45 @@ class Grid:
             output += bottom + "\n"
         
         return output
+    
+    def to_png(self, path, cell_size=10, show_coords=False, debug_print=False):
+        img_width = cell_size * self.columns
+        img_height = cell_size * self.rows
+        
+        background = ImageColor.getrgb("white")
+        foreground = ImageColor.getrgb("black")
+        
+        with Image.new("RGB", (img_width + 1, img_height + 1), background) as im:
+            im_draw = ImageDraw.Draw(im)
+            im_draw.rectangle((0, 0, img_width, img_height), width=1, outline=foreground)
+
+            for cell in self.cell_iter:
+                x1 = cell.column * cell_size
+                y1 = cell.row * cell_size
+                x2 = (cell.column + 1) * cell_size
+                y2 = (cell.row + 1) * cell_size
+                
+                if debug_print:
+                    print(cell.column, cell.row)
+                
+                if cell.north is None:
+                    im_draw.line([(x1, y1), (x2, y1)], fill=foreground, width=1)
+                    if debug_print:
+                        print("\tnorth wall")
+                if cell.west is None:
+                    im_draw.line([(x1, y1), (x1, y2)], fill=foreground, width=1)
+                    if debug_print:
+                        print("\twest wall")
+                if not cell.is_linked(cell.east):
+                    im_draw.line([(x2, y1), (x2, y2)], fill=foreground, width=1)
+                    if debug_print:
+                        print("\teast wall")
+                if not cell.is_linked(cell.south):
+                    im_draw.line([(x1, y2), (x2, y2)], fill=foreground, width=1)
+                    if debug_print:
+                        print("\tsouth wall")
+                
+                if show_coords:
+                    im_draw.text((x1, y1), f"{cell.column},{cell.row}", fill=foreground)
+                
+            im.show(path)

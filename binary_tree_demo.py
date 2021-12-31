@@ -8,3 +8,5 @@ print(grid)
 BinaryTree.on(grid)
 
 print(grid)
+
+grid.to_png("out.png", 25)
